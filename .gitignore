@@ -16,6 +16,7 @@ DerivedData
 *.hmap
 *.ipa
 *.xcuserstate
+**/xcshareddata/
 
 # CocoaPods
 #
@@ -31,3 +32,5 @@ DerivedData
 # Carthage/Checkouts
 
 Carthage/Build
+XcodeCoverage
+RELEASE_NOTES.md

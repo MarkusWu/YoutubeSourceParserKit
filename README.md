@@ -1,100 +1,151 @@
-# YoutubeSourceParserKit 
+## About
 
-==================
-[![Build Status](https://img.shields.io/travis/movielala/YoutubeSourceParserKit/master.svg)](https://travis-ci.org/movielala/YoutubeSourceParserKit)
-![License](https://img.shields.io/badge/license-MIT-blue.svg)
-[![Dependencies](https://img.shields.io/badge/dependencies-none-brightgreen.svg)](https://github.com/mobileplayer/mobileplayer-ios)
-[![Ready](https://badge.waffle.io/movielala/YoutubeSourceParserKit.png?label=Ready&title=Ready)](https://waffle.io/movielala/YoutubeSourceParserKit)
-[![StackOverflow](https://img.shields.io/badge/StackOverflow-Ask%20a%20question!-blue.svg)](http://stackoverflow.com/questions/ask?tags=YoutubeSourceParserKit+ios+swift)
-[![CocoaPods](https://img.shields.io/cocoapods/v/YoutubeSourceParserKit.svg)](https://img.shields.io/cocoapods/v/YoutubeSourceParserKit.svg)
-[![Join the chat at https://gitter.im/mobileplayer/mobileplayer-ios](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/movielala/YoutubeSourceParserKit)
+[![Build Status](https://img.shields.io/circleci/project/0xced/XCDYouTubeKit/develop.svg?style=flat)](https://circleci.com/gh/0xced/XCDYouTubeKit)
+[![Coverage Status](https://img.shields.io/codecov/c/github/0xced/XCDYouTubeKit/develop.svg?style=flat)](https://codecov.io/gh/0xced/XCDYouTubeKit/branch/develop)
+[![Platform](https://img.shields.io/cocoapods/p/XCDYouTubeKit.svg?style=flat)](http://cocoadocs.org/docsets/XCDYouTubeKit/)
+[![Pod Version](https://img.shields.io/cocoapods/v/XCDYouTubeKit.svg?style=flat)](https://cocoapods.org/pods/XCDYouTubeKit)
+[![Carthage Compatibility](https://img.shields.io/badge/Carthage-compatible-4BC51D.svg?style=flat)](https://github.com/Carthage/Carthage/)
+[![License](https://img.shields.io/cocoapods/l/XCDYouTubeKit.svg?style=flat)](LICENSE)
 
+**XCDYouTubeKit** is a YouTube video player for iOS, tvOS and macOS.
 
-YouTube Video Link Parser for Swift. Heavily inspried from hellozimi's repo [HCYoutubeParser](https://github.com/hellozimi/HCYoutubeParser)
+<img src="Screenshots/XCDYouTubeVideoPlayerViewController.png" width="480" height="320">
 
-##Introduction
+Are you enjoying XCDYouTubeKit? You can say thank you with [a tweet](https://twitter.com/intent/tweet?text=%400xced%20Thank%20you%20for%20XCDYouTubeKit%2E). I am also accepting donations. ;-)
 
-__Requires iOS 8 or later and Xcode 7.0+__<br/>
-Swift support uses dynamic frameworks and is therefore only supported on iOS > 8.
+[![Donate button](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=MGEPRSNQFMV3W)
 
-##Installation
+## Requirements
 
-To install via CocoaPods add this line to your `Podfile`.
-```
-use_frameworks!
-```
-and
-```
-pod 'YoutubeSourceParserKit'
-```
+- Runs on iOS 8.0 and later
+- Runs on macOS 10.9 and later
+- Runs on tvOS 9.0 and later
 
-Then, run the following command:
+## Warning
 
-```$ pod install```
+XCDYouTubeKit is against the YouTube [Terms of Service](https://www.youtube.com/t/terms). The only *official* way of playing a YouTube video inside an app is with a web view and the [iframe player API](https://developers.google.com/youtube/iframe_api_reference). Unfortunately, this is very slow and quite ugly, so I wrote this player to give users a better viewing experience.
 
-##Usage
+## Installation
 
-```swift
-import YoutubeSourceParserKit
+XCDYouTubeKit is available through CocoaPods and Carthage.
+
+CocoaPods:
+
+```ruby
+pod "XCDYouTubeKit", "~> 2.7"
 ```
 
-```swift
-let testURL = NSURL(string: "https://www.youtube.com/watch?v=swZJwZeMesk")!
-    Youtube.h264videosWithYoutubeURL(testURL) { (videoInfo, error) -> Void in
-      if let videoURLString = videoInfo?["url"] as? String,
-        videoTitle = videoInfo?["title"] as? String {
-          print("\(videoTitle)")
-          print("\(videoURLString)")
-      }
+Carthage:
+
+```objc
+github "0xced/XCDYouTubeKit" ~> 2.7
+```
+
+Alternatively, you can manually use the provided static library or dynamic framework. In order to use the static library, you must:
+
+1. Create a workspace (File → New → Workspace…)
+2. Add your project to the workspace
+3. Add the XCDYouTubeKit project to the workspace
+4. Drag and drop the `libXCDYouTubeKit.a` file referenced from XCDYouTubeKit → Products → libXCDYouTubeKit.a into the *Link Binary With Libraries* build phase of your app’s target.
+
+These steps will ensure that `#import <XCDYouTubeKit/XCDYouTubeKit.h>` will work properly in your project.
+
+## Usage
+
+XCDYouTubeKit is [fully documented](http://cocoadocs.org/docsets/XCDYouTubeKit/).
+
+### iOS 8.0+ & tvOS (AVPlayerViewController)
+
+```objc 
+AVPlayerViewController *playerViewController = [AVPlayerViewController new];
+[self presentViewController:playerViewController animated:YES completion:nil];
+
+__weak AVPlayerViewController *weakPlayerViewController = playerViewController;
+[[XCDYouTubeClient defaultClient] getVideoWithIdentifier:videoIdentifier completionHandler:^(XCDYouTubeVideo * _Nullable video, NSError * _Nullable error) {
+    if (video)
+    {
+        NSDictionary *streamURLs = video.streamURLs;
+        NSURL *streamURL = streamURLs[XCDYouTubeVideoQualityHTTPLiveStreaming] ?: streamURLs[@(XCDYouTubeVideoQualityHD720)] ?: streamURLs[@(XCDYouTubeVideoQualityMedium360)] ?: streamURLs[@(XCDYouTubeVideoQualitySmall240)];
+        weakPlayerViewController.player = [AVPlayer playerWithURL:streamURL];
+        [weakPlayerViewController.player play];
     }
+    else
+    {
+        [self dismissViewControllerAnimated:YES completion:nil];
+    }
+}];
 ```
 
+### iOS, tvOS and macOS
+
+```objc
+NSString *videoIdentifier = @"9bZkp7q19f0"; // A 11 characters YouTube video identifier
+[[XCDYouTubeClient defaultClient] getVideoWithIdentifier:videoIdentifier completionHandler:^(XCDYouTubeVideo *video, NSError *error) {
+	if (video)
+	{
+		// Do something with the `video` object
+	}
+	else
+	{
+		// Handle error
+	}
+}];
 ```
-videoInfo output:
-```
-```json
+
+### iOS 8.0
+
+On iOS, you can use the class `XCDYouTubeVideoPlayerViewController` the same way you use a `MPMoviePlayerViewController`, except you initialize it with a YouTube video identifier instead of a content URL.
+
+#### Present the video in full-screen
+
+```objc
+- (void) playVideo
 {
-    "title": "[Video Title]",
-    "isStream": 0,
-    "quality": "hd720",
-    "itag": 22,
-    "fallback_host": "tc.v20.cache2.googlevideo.com",
-    "url": "http://[Source URL]"
+	XCDYouTubeVideoPlayerViewController *videoPlayerViewController = [[XCDYouTubeVideoPlayerViewController alloc] initWithVideoIdentifier:@"9bZkp7q19f0"];
+	[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(moviePlayerPlaybackDidFinish:) name:MPMoviePlayerPlaybackDidFinishNotification object:videoPlayerViewController.moviePlayer];
+	[self presentMoviePlayerViewControllerAnimated:videoPlayerViewController];
 }
+
+- (void) moviePlayerPlaybackDidFinish:(NSNotification *)notification
+{
+	[[NSNotificationCenter defaultCenter] removeObserver:self name:MPMoviePlayerPlaybackDidFinishNotification object:notification.object];
+	MPMovieFinishReason finishReason = [notification.userInfo[MPMoviePlayerPlaybackDidFinishReasonUserInfoKey] integerValue];
+	if (finishReason == MPMovieFinishReasonPlaybackError)
+	{
+		NSError *error = notification.userInfo[XCDMoviePlayerPlaybackDidFinishErrorUserInfoKey];
+		// Handle error
+	}
+}
+
 ```
 
-##MPMoviePlayerController Usage
+#### Present the video in a non full-screen view
 
-![alt tag](http://s10.postimg.org/5j1mristl/i_OS_Simulator_Screen_Shot_Jul_12_2015_14_33_02.png)
-
-```swift
-import UIKit
-import YoutubeSourceParserKit
-import MediaPlayer
-
-class ViewController: UIViewController {
-
-  let moviePlayer = MPMoviePlayerController()
-
-  override func viewDidLoad() {
-    super.viewDidLoad()
-    moviePlayer.view.frame = view.frame
-    view.addSubview(moviePlayer.view)
-    moviePlayer.fullscreen = true
-    let youtubeURL = NSURL(string: "https://www.youtube.com/watch?v=swZJwZeMesk")!
-    playVideoWithYoutubeURL(youtubeURL)
-  }
-
-  func playVideoWithYoutubeURL(url: NSURL) {
-    Youtube.h264videosWithYoutubeURL(url, completion: { (videoInfo, error) -> Void in
-      if let
-        videoURLString = videoInfo?["url"] as? String,
-        videoTitle = videoInfo?["title"] as? String {
-          self.moviePlayer.contentURL = NSURL(string: videoURLString)
-      }
-    })
-  }
-}
+```objc
+XCDYouTubeVideoPlayerViewController *videoPlayerViewController = [[XCDYouTubeVideoPlayerViewController alloc] initWithVideoIdentifier:@"9bZkp7q19f0"];
+[videoPlayerViewController presentInView:self.videoContainerView];
+[videoPlayerViewController.moviePlayer play];
 ```
-Warning:
-This repo is for educational purposes.  This is not approved by the ToC of YouTube. Use at own risk. 
+
+See the demo project for more sample code.
+
+## Logging
+
+Since version 2.2.0, XCDYouTubeKit produces logs. XCDYouTubeKit supports [CocoaLumberjack](https://github.com/CocoaLumberjack/CocoaLumberjack) but does not require it.
+
+See the `XCDYouTubeLogger` class [documentation](http://cocoadocs.org/docsets/XCDYouTubeKit/) for more information.
+
+## Credits
+
+The URL extraction algorithms in *XCDYouTubeKit* are inspired by the [YouTube extractor](https://github.com/rg3/youtube-dl/blob/master/youtube_dl/extractor/youtube.py) module of the *youtube-dl* project.
+
+## Contact
+
+Cédric Luthi
+
+- http://github.com/0xced
+- http://twitter.com/0xced
+
+## License
+
+XCDYouTubeKit is available under the MIT license. See the [LICENSE](LICENSE) file for more information.
